@@ -1,0 +1,9 @@
+<!--pages/map/map.wxml-->
+<view class='box'>获取加速针</view>
+<view class='box'>{{passinfo.accelerations.x}}{{passinfo.accelerations.y}}{{passinfo.accelerations.z}}</view>
+<view class='box'>罗盘仪</view>
+<view class='box'>{{passinfo.direction[0]}}{{passinfo.direction[1]}}</view>
+<view class='box'>IBEAN</view>
+<view class='box'>{{passinfo.beacons}}</view>
+<view class='box'>OPENID</view>
+<view class='box'>{{passinfo.opendId}}</view>

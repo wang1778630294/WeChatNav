@@ -1,0 +1,2 @@
+<!--pages/xzmap/xzmap.wxml-->
+<web-view src="{{viewUrl}}"></web-view>   

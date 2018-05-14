@@ -1,0 +1,3 @@
+<!--pages/test/test.wxml-->
+<navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/zkjdnav#wechat_redirect'>中科劲点测试导航</navigator> 
+<navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect'>西站小程序测试导航</navigator>

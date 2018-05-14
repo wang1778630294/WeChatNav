@@ -1,0 +1,17 @@
+{
+  "pages":[
+    "pages/test/test",
+    "pages/xzmap/xzmap",
+    
+    "pages/new/new",
+    "pages/newindex/newindex",
+    "pages/map/map"
+    
+  ],
+  "window":{
+    "backgroundTextStyle":"light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "室内导航",
+    "navigationBarTextStyle":"black"
+  }
+}
