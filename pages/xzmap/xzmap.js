@@ -13,7 +13,9 @@ Page({
     directionArr: [],
     isClearDir:false,
     directionArrios: [],
-    friendOpenId: null,
+    sessionId:'',
+    avatarUrl:'',
+    isOpen: true,
     passinfo: {
       direction: [],
       openId: '',
@@ -28,38 +30,39 @@ Page({
 
   // 分享
   onShareAppMessage: function (res) {
+
     let _that = this;
+
+    /**
+     * 1.创建websocket  获取sessionId
+     * 
+     * 2.把sessionId   传递到分享的页面
+     * 
+     * */
+
+    let sessionId = "";
+    if (_that.data.sessionId) {
+      sessionId = _that.data.sessionId;
+    }else{
+      sessionId = _that.data.passinfo.openId + 'session';
+    }
+
+    console.log(sessionId);
+
     return {
       title: '分享我的位置',
-      path: '/pages/xzmap/xzmap?openId=' + _that.data.passinfo.openId,
+      path: '/pages/xzmap/xzmap?sessionId=' + sessionId,
       success: function (res) {
-        wx.getShareInfo({
-          shareTicket: res.shareTickets[0],
-          success: function (res) { 
-
-            /**
-             * 1.创建websocket  获取sessionId
-             * 
-             * 2.把sessionId   传递到分享的页面
-             * 
-             * */ 
-        
-
-            _that.setData({
-              viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=o5FDx5GxcZ0PvWxgnRoqIVVHm0dw&friendId="
-            })
-          },
-          fail: function (res) {
-            
-          },
-          complete: function (res) { 
-
-          }
-        })
+        _that.data.isOpen = false;
+        if (!_that.data.sessionId) {
+          _that.setData({
+            viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl
+          })
+        }
       },
       fail: function (res) {
         // 转发失败
-        
+        console.log("转发失败");
       }
     }
   },
@@ -71,6 +74,7 @@ Page({
     let _that = this;
     wx.login({
       success: (res) => {
+      
         if (res.code) {
           // 发起网络请求
           wx.request({
@@ -79,18 +83,17 @@ Page({
               code: res.code
             },
             success: (res) => {
-              let _that = this;
-              this.data.passinfo.openId = res.data.data;
-              if (_that.data.friendOpenId) {
-                this.setData({
-                  viewUrl: "https://xzdqnavi.powerlbs.com/zkjdnav#wechat_redirect?openId=" + res.data.data + "&friendId=" + _that.data.friendOpenId
+              _that.data.passinfo.openId = res.data.data;
+              console.log(_that.data.sessionId);
+              console.log(_that.data.isOpen);
+              console.log(!_that.data.sessionId && _that.data.isOpen)
+              if (!_that.data.sessionId && _that.data.isOpen) {
+                _that.setData({
+                  viewUrl: _that.navurl + "?" + _that.data.passinfo.openId
                 })
-              }else{
-                this.setData({
-                  viewUrl: this.navurl + "?openId=" + _that.data.passinfo.openId + "&friendId="
-                })
+                console.log("能进来吗");
               }
-
+              
               wx.openBluetoothAdapter({
                 success: (res) => {
                   // 获取所有设备信息
@@ -152,40 +155,50 @@ Page({
    * 开始获取ibeacon
    */
   startBeaconDiscovery: function(){
+
+    // console.log("开始前的时间戳" + new Date().getTime())
+
     let _that = this;
     wx.startBeaconDiscovery({
       uuids: ['AB8190D5-D11E-4941-ACC4-42F30510B408', 'FDA50693-A4E2-4FB1-AFCF-C6EB07647825'], //西站
+      // uuids: ['FDA50693-A4E2-4FB1-AFCF-C6EB07647825'],
       success(res) {
-        console.log("开始了");
-        console.log(res);
+        // console.log("开始的时间戳" + new Date().getTime())
         // 监听设备信息,兼容安卓设备onBeaconUpdate方法
-
-          let info = wx.getSystemInfoSync()
-          let sys = info.system;
-          let sysArr = sys.split(' ');
-          _that.data.passinfo.deviceType = sysArr[0];
-          if (sysArr[0] === "iOS") {
-            wx.onBeaconUpdate((res) => {
-              _that.data.passinfo.beacons = res.beacons
-            })
-          } else {
-            _that.data.timer = setTimeout(() => {
-              wx.getBeacons({
-                success: (res) => {
-                  console.log(res);
-                  _that.data.passinfo.beacons = res.beacons
-                }
-              })
-
-              _that.stopBeaconDiscovery();
-            }, 1000)
-          }
-
       },
       fail: function () {
-        console.log("打开失败了");
+        
       }
     })
+
+
+    try {
+      let info = wx.getSystemInfoSync()
+      let sys = info.system;
+      let sysArr = sys.split(' ');
+      _that.data.passinfo.deviceType = sysArr[0];
+      if (sysArr[0] === "iOS") {
+        wx.onBeaconUpdate((res) => {
+          _that.data.passinfo.beacons = res.beacons
+        })
+      } else {
+        _that.data.timer = setTimeout(() => {
+          // wx.getBeacons({
+          //   success: (res) => {
+          //     console.log(res);
+          //     _that.data.passinfo.beacons = res.beacons
+          //   }
+          // })
+          wx.onBeaconUpdate((res) => {
+            _that.data.passinfo.beacons = res.beacons
+          })
+          _that.stopBeaconDiscovery();
+        }, 1500)
+      }
+    } catch (e) {
+      // Do something when catch error
+    }
+
   },
 
   /**
@@ -195,11 +208,11 @@ Page({
     let _that = this;
     wx.stopBeaconDiscovery({
       success: function (res) {
-        console.log("结束了");
+        // console.log("结束的时间戳"+new Date().getTime())
         _that.startBeaconDiscovery();
       },
       fail:function(){
-        console.log("结束失败了");
+        
       }
     })
   },
@@ -221,15 +234,16 @@ Page({
     }
 
     this.data.passinfo.accelerations = this.data.accelerationsArr;
-
+  
     wx.request({
       url: 'https://xzdqnavi.powerlbs.com/wechat/locate',
       data: _that.data.passinfo,
       method: 'POST',
       success: function (res) {
-        retuestTimer = setTimeout(function(){
-          _that.postData();
-        },1000);
+        
+        // retuestTimer = setTimeout(function(){
+        //   _that.postData();
+        // },1500);
         
       }
     })
@@ -258,10 +272,11 @@ Page({
     }
     let _that = this;
 
+   
     // 开始捕获ibeacon
+
     this.startBeaconDiscovery();
-
-
+    
     // 监听罗盘仪
     wx.onCompassChange((res) => {
       this.data.directionArr.push(res.direction);
@@ -272,14 +287,15 @@ Page({
     wx.onAccelerometerChange((res) => {
       this.data.accelerationsArr.push(res);
     })
-   
     
-    // 将获取到的信息发送至服务器;
-    this.postData();
-
-    // retuestTimer = setInterval(this.postData,1000);
+    setTimeout(function(){
+      _that.postData();
+    },2100)
+    
+    retuestTimer = setInterval(this.postData,1500);
 
   },
+
 
 
   /**
@@ -288,42 +304,71 @@ Page({
   onLoad: function (options) {
 
 
+    console.log(options);
+
+    let _that = this;
+
+   
+
+    wx.getUserInfo({
+      complete: function (data) {
+        if (data.userInfo) {
+          _that.data.avatarUrl = data.userInfo.avatarUrl;
+        }
+
+      }
+    });
+
     if (options.sessionId) {
-
+      _that.data.isOpen = false;
+      console.log(options.sessionId);
+      
       /**
-       * 如果有sessionId, 是好友分享的页面
+       * 有sessionId 好友分享的页面
        * 储存sessionId 
-       * 
        */
+      _that.data.sessionId = options.sessionId;
+      wx.login({
+        success: (res) => {
+          if (res.code) {
+            // 发起网络请求
+            wx.request({
+              url: 'https://xzdqnavi.powerlbs.com/wechat/openid',
+              data: {
+                code: res.code
+              },
+              success: (res) => {
 
-      this.data.friendOpenId = options.sessionId;
+                this.data.passinfo.openId = res.data.data;
 
-      wx.showToast({
-        title: this.data.friendOpenId,
-        icon: 'success',
-        duration: 20000
-      })
+                _that.setData({
+                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
+                })
+
+                console.log("进入页面时候打开的url.........................");
+                console.log(_that.data.avatarUrl);
+
+
+              },
+            })
+          };
+        }
+
+      });
 
     }
 
 
     this.navurl = options.navurl;
-    wx.showShareMenu({
-      withShareTicket: true,
-      success: function (res) {
 
-      },
-      fail: function (res) {
-
-      }
-    })
   },
+
 
   /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady: function () {
-
+    
   },
 
   /**
@@ -334,7 +379,6 @@ Page({
     // 获取openid
     this.getOpenId();
 
-    
   },
 
   /**
