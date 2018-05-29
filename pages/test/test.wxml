@@ -1,5 +1,15 @@
 <!--pages/test/test.wxml-->
-<navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/zkjdnav#wechat_redirect'>中科劲点测试导航</navigator> 
-<navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect'>西站小程序测试导航</navigator>
+<view class='container'>
+  <view class='img_button' bindtap="navTozk" bubbles="true" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">
+    <image src="{{jdsrc}}"></image>
+    <text class='title'> 中科劲点</text>
+  </view>
+  <view class='img_button' bindtap="navToxz">
+    <image src="{{xzsrc}}"></image>
+    <text class='title title_color'>北京西站</text>
+  </view>
+  <!-- <navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/zkjdnav#wechat_redirect'>中科劲点测试导航</navigator> 
+  <navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect'>西站小程序测试导航</navigator>
 
-<button wx:if="{{canIUse}}" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">授权登录</button>
+  <button wx:if="{{canIUse}}" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">授权登录</button> -->
+</view>

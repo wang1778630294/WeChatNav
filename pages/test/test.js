@@ -4,9 +4,22 @@ Page({
    * 页面的初始数据
    */
   data: {
-    canIUse: true
+    canIUse: true,
+    jdsrc: "images/jindian.jpg",
+    xzsrc: 'images/xizhan1.jpg'
   },
-  
+
+  navTozk: function () {
+    wx.navigateTo({
+      url: '/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/zkjdnav#wechat_redirect&uuid=FDA50693-A4E2-4FB1-AFCF-C6EB07647825',
+    })
+  },
+  navToxz: function () {
+    wx.navigateTo({
+      url: '/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect&uuid=AB8190D5-D11E-4941-ACC4-42F30510B408',
+    })
+  },
+
 
   /**
    * 生命周期函数--监听页面初次渲染完成
@@ -14,7 +27,7 @@ Page({
   onReady: function () {
    
   },
-  onLoad: function(){
+  onLoad: function (options){
     let _that = this;
     wx.getSetting({
       success: function (res) {
@@ -26,6 +39,14 @@ Page({
         }
       }
     })
+
+    if (options.sessionId) {
+      console.log("页面跳转")
+      wx.navigateTo({
+        url: '/pages/xzmap/xzmap?sessionId=' + options.sessionId + '&uuid=' + options.uuid,
+      })
+    }
+
   },
   /**
    * openBluetooth
@@ -48,7 +69,6 @@ Page({
       }
     })
   },
-
   /**
    * 生命周期函数--监听页面显示
    */
