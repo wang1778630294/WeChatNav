@@ -12,4 +12,7 @@
   <navigator url='/pages/xzmap/xzmap?navurl=https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect'>西站小程序测试导航</navigator>
 
   <button wx:if="{{canIUse}}" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">授权登录</button> -->
+
+  <button wx:if="{{canIUse}}" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">授权登录</button>
+
 </view>

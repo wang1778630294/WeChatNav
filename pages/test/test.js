@@ -55,12 +55,7 @@ Page({
     let _that = this;
     wx.openBluetoothAdapter({
       success: (res) => {
-        // 获取所有设备信息
-        wx.showToast({
-          title: '打开成功',
-          icon: 'success',
-          duration: 2000
-        })
+        
       },
       fail: function (res) {
         setTimeout(function(){

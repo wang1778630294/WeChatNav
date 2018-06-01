@@ -17,6 +17,8 @@ Page({
     avatarUrl:'',
     isOpen: true,
     uuid:[],
+    isFirst: true,
+    lastBeaconArr: true,
     passinfo: {
       direction: [],
       openId: '',
@@ -55,7 +57,7 @@ Page({
         _that.data.isOpen = false;
         if (!_that.data.sessionId) {
           _that.setData({
-            viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
+            viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
           })
         }
       },
@@ -145,6 +147,40 @@ Page({
   },
 
 
+  /**
+   * beacon去同方法;
+   */
+  beaconRemoveRame: function(lastBeacons,beacons){
+    // console.log("上一次.................................");
+    // console.log(lastBeacons);
+    // console.log("这一次..................................");
+    // console.log(beacons);
+    let newBeacons = [];
+    if (beacons.length>0) {
+      newBeacons = beacons;
+      for (let i = 0; i < beacons.length; i++) {
+        if (beacons[i]!==undefined) {
+          for (let j = 0; j < lastBeacons.length; j++) {
+            if (lastBeacons[j] !== undefined) {
+              if (beacons[i].minor == lastBeacons[j].minor && beacons[i].rssi == lastBeacons[j].rssi) {
+                newBeacons.splice(i, 1);
+              }
+            }
+            
+          }
+        }
+        
+      }
+    }else{
+      newBeacons = lastBeacons;
+    }
+
+    // console.log("去除同样beacon后....................................");
+    console.log(newBeacons);
+
+    return newBeacons;
+  },
+
 
   /**
    * 开始获取ibeacon
@@ -175,13 +211,38 @@ Page({
           _that.data.passinfo.beacons = res.beacons
         })
       } else {
-        _that.data.timer = setTimeout(() => {
-          wx.onBeaconUpdate((res) => {
-            _that.data.passinfo.beacons = res.beacons
-          })
-          _that.stopBeaconDiscovery();
+        // _that.data.timer = setTimeout(() => {
+        //   wx.onBeaconUpdate((res) => {
+        //     console.log(res);
+        //     _that.data.passinfo.beacons = res.beacons
+        //   })
+        //   _that.stopBeaconDiscovery();
 
-        }, 6500)
+        // }, 1000)
+
+        if (_that.data.timer) {
+          clearInterval(_that.data.timer);
+        }
+        _that.data.timer = setInterval(()=>{
+          wx.getBeacons({
+            success(res) {
+              
+              if (_that.data.isFirst) {
+                _that.data.passinfo.beacons = res.beacons;
+                _that.data.lastBeaconArr = res.beacons;
+                _that.data.isFirst = false;
+              }else{
+                _that.data.passinfo.beacons = _that.beaconRemoveRame(_that.data.lastBeaconArr, res.beacons);
+              }
+              
+            }
+          })
+        },1000)
+
+        setTimeout(()=>{
+          _that.stopBeaconDiscovery();
+        },6500)
+
       }
 
     } catch (e) {
@@ -225,7 +286,7 @@ Page({
 
     this.data.passinfo.accelerations = this.data.accelerationsArr;
 
-    console.log(this.data.passinfo);
+    // console.log(this.data.passinfo.beacons);
 
     wx.request({
       url: 'https://xzdqnavi.powerlbs.com/wechat/locate',
@@ -336,7 +397,7 @@ Page({
                 this.data.passinfo.openId = res.data.data;
 
                 _that.setData({
-                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
+                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
                 })
               },
             })
