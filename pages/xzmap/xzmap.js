@@ -19,6 +19,10 @@ Page({
     uuid:[],
     isFirst: true,
     lastBeaconArr: true,
+    stopTimer: null,
+    openTimer: null,
+    postTimer: null,
+    reststartTimer: null,
     passinfo: {
       direction: [],
       openId: '',
@@ -57,7 +61,7 @@ Page({
         _that.data.isOpen = false;
         if (!_that.data.sessionId) {
           _that.setData({
-            viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
+            viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
           })
         }
       },
@@ -139,7 +143,12 @@ Page({
           icon: 'success',
           duration: 2000
         })
-        setTimeout(function () {
+
+        if (_that.data.openTimer) {
+          clearTimeout(_that.data.openTimer);
+        }
+
+        _that.data.openTimer = setTimeout(function () {
           _that.openBluetooth();
         }, 5000)
       }
@@ -151,10 +160,6 @@ Page({
    * beacon去同方法;
    */
   beaconRemoveRame: function(lastBeacons,beacons){
-    // console.log("上一次.................................");
-    // console.log(lastBeacons);
-    // console.log("这一次..................................");
-    // console.log(beacons);
     let newBeacons = [];
     if (beacons.length>0) {
       newBeacons = beacons;
@@ -169,14 +174,10 @@ Page({
             
           }
         }
-        
       }
     }else{
       newBeacons = lastBeacons;
     }
-
-    // console.log("去除同样beacon后....................................");
-    console.log(newBeacons);
 
     return newBeacons;
   },
@@ -207,40 +208,63 @@ Page({
       _that.data.passinfo.deviceType = sysArr[0];
       if (sysArr[0] === "iOS") {
         wx.onBeaconUpdate((res) => {
-          console.log(res);
+          console.log("IOSbeacon...............................")
+          console.log(res.beacons);
           _that.data.passinfo.beacons = res.beacons
         })
       } else {
-        // _that.data.timer = setTimeout(() => {
-        //   wx.onBeaconUpdate((res) => {
-        //     console.log(res);
-        //     _that.data.passinfo.beacons = res.beacons
-        //   })
-        //   _that.stopBeaconDiscovery();
-
-        // }, 1000)
 
         if (_that.data.timer) {
           clearInterval(_that.data.timer);
         }
-        _that.data.timer = setInterval(()=>{
-          wx.getBeacons({
-            success(res) {
-              
-              if (_that.data.isFirst) {
-                _that.data.passinfo.beacons = res.beacons;
-                _that.data.lastBeaconArr = res.beacons;
-                _that.data.isFirst = false;
-              }else{
-                _that.data.passinfo.beacons = _that.beaconRemoveRame(_that.data.lastBeaconArr, res.beacons);
-              }
-              
-            }
-          })
-        },1000)
 
-        setTimeout(()=>{
-          _that.stopBeaconDiscovery();
+        _that.data.timer = setTimeout(() => {
+          wx.onBeaconUpdate((res)=>{
+              console.log("安卓beacon.............................");
+              console.log(res.beacons);
+              if (res.beacons.length > 0) {
+                for (let i =0; i<res.beacons.length;i++) {
+                  res.beacons[i]["uuid"] = res.beacons[i].uuid.toLocaleUpperCase();
+                }
+
+                _that.data.passinfo.beacons = res.beacons;
+              }
+
+          })
+        }, 1500)
+
+        // if (_that.data.reststartTimer) {
+        //   clearTimeout(_that.data.reststartTimer);
+          
+        // }
+        // _that.data.reststartTimer = setTimeout(() => {
+        //   _that.restStartDiscovery();
+        // }, 1500)
+
+        
+        // _that.data.timer = setInterval(()=>{
+        //   wx.getBeacons({
+        //     success(res) {
+              
+        //       if (_that.data.isFirst) {
+        //         _that.data.passinfo.beacons = res.beacons;
+        //         _that.data.lastBeaconArr = res.beacons;
+        //         _that.data.isFirst = false;
+        //       }else{
+        //         _that.data.passinfo.beacons = _that.beaconRemoveRame(_that.data.lastBeaconArr, res.beacons);
+        //       }
+              
+        //     }
+        //   })
+        // },1000)
+
+        if (_that.data.stopTimer) {
+          clearTimeout(_that.data.stopTimer);
+        }
+
+        _that.data.stopTimer = setTimeout(()=>{
+          console.log("重启定时器执行.....................");
+          _that.restStartDiscovery();
         },6500)
 
       }
@@ -254,12 +278,25 @@ Page({
   /**
    * 重新获取ibeacon
    */
+  restStartDiscovery: function() {
+    let _that = this;
+    wx.stopBeaconDiscovery({
+      success: function (res) {
+        console.log("重启方法执行................................")
+        _that.startBeaconDiscovery();
+      },
+      fail: function () {
+
+      }
+    })
+  },
+
+
+
   stopBeaconDiscovery: function () {
     let _that = this;
     wx.stopBeaconDiscovery({
       success: function (res) {
-        console.log("stopBeaconDiscovery" + new Date().getTime())
-        _that.startBeaconDiscovery();
       },
       fail: function () {
 
@@ -286,7 +323,8 @@ Page({
 
     this.data.passinfo.accelerations = this.data.accelerationsArr;
 
-    // console.log(this.data.passinfo.beacons);
+    console.log("上传提交到后台的方法");
+    console.log(this.data.passinfo.beacons);
 
     wx.request({
       url: 'https://xzdqnavi.powerlbs.com/wechat/locate',
@@ -341,9 +379,13 @@ Page({
       this.data.accelerationsArr.push(res);
     })
 
-    setTimeout(function () {
+    if (_that.data.postTimer) {
+      clearTimeout(_that.data.postTimer);
+    }
+
+    _that.data.postTimer = setTimeout(function () {
       _that.postData();
-    }, 2000)
+    }, 1500)
 
     retuestTimer = setInterval(this.postData, 1500);
 
@@ -397,7 +439,7 @@ Page({
                 this.data.passinfo.openId = res.data.data;
 
                 _that.setData({
-                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
+                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
                 })
               },
             })
