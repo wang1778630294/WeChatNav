@@ -23,6 +23,7 @@ Page({
     openTimer: null,
     postTimer: null,
     reststartTimer: null,
+    devInfo: null,
     passinfo: {
       direction: [],
       openId: '',
@@ -61,7 +62,7 @@ Page({
         _that.data.isOpen = false;
         if (!_that.data.sessionId) {
           _that.setData({
-            viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
+            viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
           })
         }
       },
@@ -98,7 +99,7 @@ Page({
               wx.openBluetoothAdapter({
                 success: (res) => {
                   // 获取所有设备信息
-                  this.obtainData();
+                  _that.obtainData();
                 },
                 fail: function (res) {
                   wx.showToast({
@@ -126,7 +127,7 @@ Page({
     });
   },
   
-
+  
   /**
    * 初始化蓝牙
    */
@@ -135,7 +136,7 @@ Page({
     wx.openBluetoothAdapter({
       success: (res) => {
         // 获取所有设备信息
-        this.obtainData();
+        // this.obtainData();
       },
       fail: function (res) {
         wx.showToast({
@@ -178,8 +179,29 @@ Page({
     }else{
       newBeacons = lastBeacons;
     }
-
     return newBeacons;
+  },
+
+
+  /**
+   * 获取设备信息
+   */
+  getInfo:function(){
+    let _that = this;
+    try {
+      let info = wx.getSystemInfoSync()
+      let sys = info.system;
+      let sysArr = sys.split(' ');
+      _that.data.passinfo.deviceType = sysArr[0];
+      if (sysArr[0] === "iOS") {
+        this.data.devInfo = "IOS";
+      } else {
+        this.data.devInfo = "Android";
+      }
+
+    } catch (e) {
+      // Do something when catch error
+    }
   },
 
 
@@ -200,80 +222,37 @@ Page({
       }
     })
 
+    if (this.data.devInfo == "IOS") {
+      wx.onBeaconUpdate((res) => {
+        console.log("IOS  beacons........................");
+        console.log(res);
+        _that.data.passinfo.beacons = res.beacons
+      })
+    }
+    
+    if (this.data.devInfo == "Android") {
 
-    try {
-      let info = wx.getSystemInfoSync()
-      let sys = info.system;
-      let sysArr = sys.split(' ');
-      _that.data.passinfo.deviceType = sysArr[0];
-      if (sysArr[0] === "iOS") {
-        wx.onBeaconUpdate((res) => {
-          console.log("IOSbeacon...............................")
-          console.log(res.beacons);
-          _that.data.passinfo.beacons = res.beacons
-        })
-      } else {
-
-        if (_that.data.timer) {
-          clearInterval(_that.data.timer);
-        }
-
-        _that.data.timer = setTimeout(() => {
-          wx.onBeaconUpdate((res)=>{
-              console.log("安卓beacon.............................");
-              console.log(res.beacons);
-              if (res.beacons.length > 0) {
-                for (let i =0; i<res.beacons.length;i++) {
-                  res.beacons[i]["uuid"] = res.beacons[i].uuid.toLocaleUpperCase();
-                }
-
-                _that.data.passinfo.beacons = res.beacons;
-              }
-
-          })
-        }, 1500)
-
-        // if (_that.data.reststartTimer) {
-        //   clearTimeout(_that.data.reststartTimer);
-          
-        // }
-        // _that.data.reststartTimer = setTimeout(() => {
-        //   _that.restStartDiscovery();
-        // }, 1500)
-
-        
-        // _that.data.timer = setInterval(()=>{
-        //   wx.getBeacons({
-        //     success(res) {
-              
-        //       if (_that.data.isFirst) {
-        //         _that.data.passinfo.beacons = res.beacons;
-        //         _that.data.lastBeaconArr = res.beacons;
-        //         _that.data.isFirst = false;
-        //       }else{
-        //         _that.data.passinfo.beacons = _that.beaconRemoveRame(_that.data.lastBeaconArr, res.beacons);
-        //       }
-              
-        //     }
-        //   })
-        // },1000)
-
-        if (_that.data.stopTimer) {
-          clearTimeout(_that.data.stopTimer);
-        }
-
-        _that.data.stopTimer = setTimeout(()=>{
-          console.log("重启定时器执行.....................");
-          _that.restStartDiscovery();
-        },6500)
-
+      if (_that.data.timer) {
+        clearInterval(_that.data.timer);
       }
 
-    } catch (e) {
-      // Do something when catch error
-    }
+      _that.data.timer = setTimeout(() => {
+        wx.onBeaconUpdate((res) => {
+          console.log("Android  beacons........................");
+          console.log(res);
+          if (res.beacons.length > 0) {
+            for (let i = 0; i < res.beacons.length; i++) {
+              res.beacons[i]["uuid"] = res.beacons[i].uuid.toLocaleUpperCase();
+            }
 
+            _that.data.passinfo.beacons = res.beacons;
+          }
+        })
+      }, 1500)
+    }
   },
+
+  
 
   /**
    * 重新获取ibeacon
@@ -282,7 +261,6 @@ Page({
     let _that = this;
     wx.stopBeaconDiscovery({
       success: function (res) {
-        console.log("重启方法执行................................")
         _that.startBeaconDiscovery();
       },
       fail: function () {
@@ -291,6 +269,19 @@ Page({
     })
   },
 
+  /**
+   * 定时重启
+   */
+  setOut: function(){
+    let _that = this;
+    if (_that.data.stopTimer) {
+      clearTimeout(_that.data.stopTimer);
+    }
+
+    _that.data.stopTimer = setTimeout(() => {
+      _that.restStartDiscovery();
+    }, 6500)
+  },
 
 
   stopBeaconDiscovery: function () {
@@ -321,10 +312,9 @@ Page({
       this.data.passinfo.direction = this.data.directionArr;
     }
 
-    this.data.passinfo.accelerations = this.data.accelerationsArr;
-
-    console.log("上传提交到后台的方法");
+    console.log("提交到后台的代码.............................");
     console.log(this.data.passinfo.beacons);
+    this.data.passinfo.accelerations = this.data.accelerationsArr;
 
     wx.request({
       url: 'https://xzdqnavi.powerlbs.com/wechat/locate',
@@ -338,8 +328,6 @@ Page({
         
       }
     })
-
-    
 
     if (this.data.directionArr.length>4){
       this.data.directionArr = [];
@@ -398,8 +386,6 @@ Page({
    */
   onLoad: function (options) {
 
-    console.log(options);
-
     let _that = this;
 
     this.data.uuid.push(options.uuid);
@@ -417,7 +403,6 @@ Page({
 
     if (options.sessionId) {
       _that.data.isOpen = false;
-      console.log(options.sessionId);
 
       /**
        * 有sessionId 好友分享的页面
@@ -439,15 +424,13 @@ Page({
                 this.data.passinfo.openId = res.data.data;
 
                 _that.setData({
-                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
+                  viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + options.sessionId + "&avatarUrl=" + _that.data.avatarUrl
                 })
               },
             })
           };
         }
-
       });
-
     }
 
 
@@ -460,7 +443,10 @@ Page({
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady: function () {
-    
+    if (this.data.devInfo == "Android") {
+      this.setOut();
+    }
+    this.getInfo();
   },
 
   /**
@@ -470,6 +456,7 @@ Page({
     let _that = this;
     // 获取openid
     this.getOpenId();
+    
 
   },
 

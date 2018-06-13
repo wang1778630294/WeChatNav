@@ -1,12 +1,12 @@
 {
   "pages":[
+"pages/lanya/lanya",
     "pages/test/test",
-    "pages/xzmap/xzmap",
+    "pages/xzmap/xzmap"
+       
     
-    "pages/new/new",
-    "pages/newindex/newindex",
-    "pages/map/map"
-    
+
+  
   ],
   "window":{
     "backgroundTextStyle":"light",
