@@ -1,3 +1,0 @@
-<!--pages/xzmap/xzmap.wxml-->
-<view>蓝牙调试信息</view>
-<textarea maxlength="-1" auto-height="true" value="{{info}}"></textarea>

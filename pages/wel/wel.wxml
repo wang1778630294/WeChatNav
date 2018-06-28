@@ -1,0 +1,7 @@
+<!--pages/wel/wel.wxml-->
+<view class="wel">
+  <view class="logo">
+    <image src="../xzmap/image/mf2.png"></image>
+  </view>
+  <button class="btn" wx:if="{{canIUse}}" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">开始体验</button>
+</view>

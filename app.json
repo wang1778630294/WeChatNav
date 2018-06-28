@@ -1,17 +1,14 @@
 {
   "pages":[
-"pages/lanya/lanya",
-    "pages/test/test",
+    "pages/wel/wel",
     "pages/xzmap/xzmap"
-       
     
-
-  
+    
   ],
   "window":{
     "backgroundTextStyle":"light",
     "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "室内导航",
+    "navigationBarTitleText": "西站地区导航",
     "navigationBarTextStyle":"black"
   }
 }
