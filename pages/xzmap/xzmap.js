@@ -7,17 +7,17 @@ Page({
    */
   data: {
     viewUrl: "",
-    navurl:'https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect',
+    navurl: 'https://xzdqnavi.powerlbs.com/xzdqnavi2#wechat_redirect',
     timer: null,
     retuestTimer: null,
     accelerationsArr: [],
     directionArr: [],
-    isClearDir:false,
+    isClearDir: false,
     directionArrios: [],
-    sessionId:'',
-    avatarUrl:'',
+    sessionId: '',
+    avatarUrl: '',
     isOpen: true,
-    uuid:[],
+    uuid: [],
     isFirst: true,
     lastBeaconArr: true,
     stopTimer: null,
@@ -26,6 +26,7 @@ Page({
     reststartTimer: null,
     devInfo: null,
     canIUse: false,
+    tostTimer: null,
     passinfo: {
       // direction: [],
       openId: '',
@@ -52,7 +53,7 @@ Page({
     let sessionId = "";
     if (_that.data.sessionId) {
       sessionId = _that.data.sessionId;
-    }else{
+    } else {
       sessionId = _that.data.passinfo.openId + 'session';
     }
 
@@ -64,17 +65,17 @@ Page({
         _that.data.isOpen = false;
         if (!_that.data.sessionId) {
           _that.setData({
-            viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl 
+            viewUrl: "https://xzdqnavi.powerlbs.com/find_people_xz/#wechat_redirect?openId=" + _that.data.passinfo.openId + "&sessionId=" + sessionId + "&avatarUrl=" + _that.data.avatarUrl
           })
         }
       },
       fail: function (res) {
         // 转发失败
-     
+
       }
     }
   },
-  
+
   /**
    * 获取openId
    */
@@ -82,7 +83,7 @@ Page({
     let _that = this;
     wx.login({
       success: (res) => {
-      
+
         if (res.code) {
           // 发起网络请求
           wx.request({
@@ -98,7 +99,7 @@ Page({
                   viewUrl: _that.data.navurl + "?" + _that.data.passinfo.openId
                 })
               }
-              
+
               wx.openBluetoothAdapter({
                 success: (res) => {
                   // 获取所有设备信息
@@ -112,7 +113,7 @@ Page({
                   })
                   wx.onBluetoothAdapterStateChange(function (res) {
                     if (res.available === true) {
-                    
+
                       _that.obtainData();
                     }
                   })
@@ -125,8 +126,8 @@ Page({
       }
     });
   },
-  
-  
+
+
   /**
    * 初始化蓝牙
    */
@@ -171,7 +172,7 @@ Page({
   //               newBeacons.splice(i, 1);
   //             }
   //           }
-            
+
   //         }
   //       }
   //     }
@@ -185,7 +186,7 @@ Page({
   /**
    * 获取设备信息
    */
-  getInfo:function(){
+  getInfo: function () {
     let _that = this;
     try {
       let info = wx.getSystemInfoSync()
@@ -224,17 +225,20 @@ Page({
     })
 
     if (this.data.devInfo == "IOS") {
+      
       wx.onBeaconUpdate((res) => {
-        let beacons_ios = '';
-        for (let i=0;i<res.beacons.length;i++) {
-          if (res.beacons[i].major == MAJOR) {
-            beacons_ios += res.beacons[i].major + ',' + res.beacons[i].minor + ',' + res.beacons[i].rssi + ';';
-          }
+        // let beacons_ios = '';
+        // for (let i = 0; i < res.beacons.length; i++) {
+        //   if (res.beacons[i].major == MAJOR) {
+        //     beacons_ios += res.beacons[i].major + ',' + res.beacons[i].minor + ',' + res.beacons[i].rssi + ';';
+        //   }
+        // }
+        if (res.beacons.length > 0) {
+          _that.data.passinfo.beacons = res.beacons;
         }
-        _that.data.passinfo.beacons = beacons_ios;
       })
     }
-    
+
     if (this.data.devInfo == "Android") {
 
       if (_that.data.timer) {
@@ -250,27 +254,29 @@ Page({
 
           // _that.data.passinfo.beacons = res.beacons;
 
-          let beacons_android = '';
-          for (let i = 0; i < res.beacons.length; i++) {
-            if (res.beacons[i].major == MAJOR) {
-              beacons_android += res.beacons[i].major + ',' + res.beacons[i].minor + ',' + res.beacons[i].rssi + ';';
-            }
-          }
+          // let beacons_android = '';
+          // for (let i = 0; i < res.beacons.length; i++) {
+          //   if (res.beacons[i].major == MAJOR) {
+          //     beacons_android += res.beacons[i].major + ',' + res.beacons[i].minor + ',' + res.beacons[i].rssi + ';';
+          //   }
+          // }
 
-          _that.data.passinfo.beacons = beacons_android;
-          
+          if(res.beacons.length>0) {
+            _that.data.passinfo.beacons = res.beacons;
+
+          }
 
         }
       })
     }
   },
 
-  
+
 
   /**
    * 重新获取ibeacon
    */
-  restStartDiscovery: function() {
+  restStartDiscovery: function () {
     let _that = this;
     wx.stopBeaconDiscovery({
       success: function (res) {
@@ -285,7 +291,7 @@ Page({
   /**
    * 定时重启
    */
-  setOut: function(){
+  setOut: function () {
     let _that = this;
     if (_that.data.stopTimer) {
       clearTimeout(_that.data.stopTimer);
@@ -328,48 +334,48 @@ Page({
 
     // this.data.passinfo.accelerations = this.data.accelerationsArr;
 
-    wx.connectSocket({
-      url: 'wss://xzdqnavi.powerlbs.com/wechat/locate',
-      success: function (res) {
-      
-      },
-      fail: function (res) {
+    // wx.connectSocket({
+    //   url: 'wss://xzdqnavi.powerlbs.com/wechat/locate',
+    //   success: function (res) {
 
-      }
-    })
+    //   },
+    //   fail: function (res) {
 
-    wx.onSocketOpen(function (res) {
-      socketOpen = true;
-      if (retuestTimer) {
-        clearInterval(retuestTimer);
-      }
-      retuestTimer = setInterval(function () {
-        time = Date.parse(new Date());
-        _that.data.passinfo.time = time;
-        sendSocketMessage(_that.data.passinfo);
-      }, 1500);
+    //   }
+    // })
 
-    })
+    // wx.onSocketOpen(function (res) {
+    //   socketOpen = true;
+    //   if (retuestTimer) {
+    //     clearInterval(retuestTimer);
+    //   }
+    //   retuestTimer = setInterval(function () {
+    //     time = Date.parse(new Date());
+    //     _that.data.passinfo.time = time;
+    //     sendSocketMessage(_that.data.passinfo);
+    //   }, 1500);
 
-    wx.onSocketError(function (res) {
-    
-    })
+    // })
 
-    function sendSocketMessage(msg) {
-      if (socketOpen) {
-        let _data = JSON.stringify(msg);
-        console.log(_data);
-        wx.sendSocketMessage({
-          data: _data,
-          success: function(res){
+    // wx.onSocketError(function (res) {
 
-          },
-          fail: function(res){
-     
-          }
-        })
-      }
-    }
+    // })
+
+    // function sendSocketMessage(msg) {
+    //   if (socketOpen) {
+    //     let _data = JSON.stringify(msg);
+    //     console.log(_data);
+    //     wx.sendSocketMessage({
+    //       data: _data,
+    //       success: function(res){
+
+    //       },
+    //       fail: function(res){
+
+    //       }
+    //     })
+    //   }
+    // }
 
 
     // wx.onSocketOpen(function (res) {
@@ -381,19 +387,18 @@ Page({
 
     // })
 
+    wx.request({
+      url: 'https://xzdqnavi.powerlbs.com/wechat/locate',
+      data: _that.data.passinfo,
+      method: 'POST',
+      success: function (res) {
 
-    // wx.request({
-    //   url: 'https://xzdqnavi.powerlbs.com/wechat/locate',
-    //   data: _that.data.passinfo,
-    //   method: 'POST',
-    //   success: function (res) {
-        
-    //     // retuestTimer = setTimeout(function(){
-    //     //   _that.postData();
-    //     // },1500);
-        
-    //   }
-    // })
+        // retuestTimer = setTimeout(function(){
+        //   _that.postData();
+        // },1500);
+
+      }
+    })
 
     // if (this.data.directionArr.length>4){
     //   this.data.directionArr = [];
@@ -402,7 +407,7 @@ Page({
     //     this.data.directionArrios = [];
     //   this.data.isClearDir = false;
     // }
-    // this.data.accelerationsArr = [];
+    this.data.accelerationsArr = [];
 
 
   },
@@ -412,7 +417,7 @@ Page({
    * 获取手机定位信息
    */
   obtainData: function () {
-    
+
     let _that = this;
 
 
@@ -431,8 +436,11 @@ Page({
     //   this.data.accelerationsArr.push(res);
     // })
 
-    this.postData();
-    // retuestTimer = setInterval(this.postData, 1500);
+    // this.postData();
+    if (_that.data.retuestTimer) {
+      clearInterval(_that.data.retuestTimer);
+    }
+    _that.data.retuestTimer = setInterval(this.postData, 1500);
 
   },
 
@@ -450,7 +458,7 @@ Page({
       complete: function (data) {
         if (data.userInfo) {
           _that.data.avatarUrl = data.userInfo.avatarUrl;
-        }else{
+        } else {
           _that.setData({
             canIUse: true
           })
@@ -512,7 +520,7 @@ Page({
     wx.getSetting({
       success: (res) => {
 
-        
+
       }
     })
 
@@ -521,8 +529,12 @@ Page({
       success: function (res) {
 
       },
-      fail: function(res){
-        setTimeout(() => {
+      fail: function (res) {
+
+        if (_that.data.tostTimer) {
+          clearTimeout(_that.tostTimer);
+        }
+        _that.data.tostTimer = setTimeout(() => {
           wx.showToast({
             title: '请授予定位权限',
             icon: 'success',
@@ -562,12 +574,12 @@ Page({
     clearTimeout(this.data.timer);
 
     wx.closeSocket({
-      success: function(res){
+      success: function (res) {
       },
-      fail: function(res){
+      fail: function (res) {
 
       },
-      complete: function(res){
+      complete: function (res) {
 
       }
     })
@@ -580,5 +592,5 @@ Page({
     clearInterval(retuestTimer);
     clearTimeout(this.data.timer);
   }
-  
+
 })
